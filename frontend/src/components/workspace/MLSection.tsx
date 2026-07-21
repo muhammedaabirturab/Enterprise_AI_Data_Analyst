@@ -204,7 +204,7 @@ function ResultsPanel({ result }: { result: MLRunResult }) {
               <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="feature" tick={{ fontSize: 11, fill: "#94a3b8" }} width={120} axisLine={false} tickLine={false} />
               <Tooltip />
-              <Bar dataKey="importance" fill="#4F46E5" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="importance" fill="#4F46E5" radius={[0, 6, 6, 0]} isAnimationActive={false} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -227,7 +227,7 @@ function ResultsPanel({ result }: { result: MLRunResult }) {
               <XAxis dataKey="fpr" type="number" domain={[0, 1]} tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <YAxis dataKey="tpr" type="number" domain={[0, 1]} tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="tpr" stroke="#06B6D4" strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="tpr" stroke="#0891B2" strokeWidth={2.5} dot={false} isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -242,7 +242,7 @@ function ResultsPanel({ result }: { result: MLRunResult }) {
               <XAxis dataKey="x" type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <YAxis dataKey="y" type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <Tooltip />
-              <Scatter data={result.artifacts.scatter_sample} fill="#4F46E5" fillOpacity={0.65} />
+              <Scatter data={result.artifacts.scatter_sample} fill="#4F46E5" fillOpacity={0.7} isAnimationActive={false} />
             </ScatterChart>
           </ResponsiveContainer>
         </div>
@@ -263,8 +263,8 @@ function ResultsPanel({ result }: { result: MLRunResult }) {
               />
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="actual" stroke="#4F46E5" dot={false} strokeWidth={2.5} />
-              <Line type="monotone" dataKey="forecast" stroke="#F59E0B" dot={false} strokeWidth={2.5} strokeDasharray="5 5" />
+              <Line type="monotone" dataKey="actual" stroke="#4F46E5" dot={false} strokeWidth={2.5} isAnimationActive={false} />
+              <Line type="monotone" dataKey="forecast" stroke="#D97706" dot={false} strokeWidth={2.5} strokeDasharray="5 5" isAnimationActive={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
