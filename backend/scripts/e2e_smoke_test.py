@@ -292,6 +292,18 @@ def run_case(token, case_fn, case_num):
             r = requests.post(f"{BASE}/datasets/{ds_id}/charts", json=payload, headers=auth_headers(token))
             check(f"[{name}] chart:{chart_type}", r.status_code == 200, r.text[:200])
 
+    # Regression test: requesting a numeric-only chart type on a non-numeric column must
+    # return a clean 400 (not a 200 with null stats that crashes the frontend, and not a 500).
+    if cat_cols:
+        for chart_type in ("histogram", "boxplot", "distribution"):
+            payload = {"chart_type": chart_type, "x": cat_cols[0]}
+            r = requests.post(f"{BASE}/datasets/{ds_id}/charts", json=payload, headers=auth_headers(token))
+            check(
+                f"[{name}] chart:{chart_type} on non-numeric column rejected cleanly",
+                r.status_code == 400,
+                f"status={r.status_code} body={r.text[:200]}",
+            )
+
     # Cleaning: fill missing / drop duplicates / drop rows with missing (whichever applies) + undo
     if profile.get("missing_cells", 0) > 0 and numeric_cols:
         r = requests.post(

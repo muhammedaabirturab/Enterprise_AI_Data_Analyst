@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { ReactNode } from "react";
 
+import ErrorBoundary from "../ui/ErrorBoundary";
+
 interface WorkspaceSectionProps {
   id: string;
   eyebrow: string;
@@ -35,7 +37,7 @@ export default function WorkspaceSection({ id, eyebrow, title, description, icon
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      {children}
+      <ErrorBoundary label={title}>{children}</ErrorBoundary>
     </motion.section>
   );
 }

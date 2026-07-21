@@ -8,8 +8,17 @@ def _clean_numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce").dropna()
 
 
+def _require_numeric(series: pd.Series, column: str) -> pd.Series:
+    if series.empty:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"'{column}' has no numeric values to chart. Choose a numeric column instead.",
+        )
+    return series
+
+
 def histogram(df: pd.DataFrame, column: str, bins: int = 20) -> dict:
-    series = _clean_numeric(df[column])
+    series = _require_numeric(_clean_numeric(df[column]), column)
     counts, edges = np.histogram(series, bins=bins)
     data = [
         {"bin": f"{edges[i]:.2f} - {edges[i + 1]:.2f}", "count": int(counts[i]), "binStart": float(edges[i])}
@@ -19,7 +28,7 @@ def histogram(df: pd.DataFrame, column: str, bins: int = 20) -> dict:
 
 
 def boxplot(df: pd.DataFrame, column: str) -> dict:
-    series = _clean_numeric(df[column])
+    series = _require_numeric(_clean_numeric(df[column]), column)
     q1, q2, q3 = series.quantile([0.25, 0.5, 0.75])
     iqr = q3 - q1
     lower, upper = q1 - 1.5 * iqr, q3 + 1.5 * iqr
@@ -42,6 +51,11 @@ def boxplot(df: pd.DataFrame, column: str) -> dict:
 
 def scatter(df: pd.DataFrame, x: str, y: str) -> dict:
     subset = df[[x, y]].apply(pd.to_numeric, errors="coerce").dropna()
+    if subset.empty:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No overlapping numeric values between '{x}' and '{y}' to plot.",
+        )
     points = subset.head(2000).rename(columns={x: "x", y: "y"}).to_dict(orient="records")
     return {"chart_type": "scatter", "x": x, "y": y, "data": points}
 
@@ -78,7 +92,7 @@ def area(df: pd.DataFrame, x: str, y: str) -> dict:
 
 
 def distribution(df: pd.DataFrame, column: str) -> dict:
-    series = _clean_numeric(df[column])
+    series = _require_numeric(_clean_numeric(df[column]), column)
     return {
         "chart_type": "distribution",
         "column": column,

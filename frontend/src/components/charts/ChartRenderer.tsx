@@ -150,7 +150,10 @@ export default function ChartRenderer({ chart }: { chart: any }) {
 }
 
 function BoxPlot({ data, column }: { data: any; column: string }) {
-  const { min, q1, median, q3, max } = data;
+  const { min, q1, median, q3, max } = data ?? {};
+  if ([min, q1, median, q3, max].some((v) => v === null || v === undefined || Number.isNaN(v))) {
+    return <p className="text-sm text-slate-400 p-8 text-center">Not enough numeric data in "{column}" to draw a box plot.</p>;
+  }
   const range = max - min || 1;
   const pct = (v: number) => ((v - min) / range) * 100;
 
@@ -190,7 +193,10 @@ function BoxPlot({ data, column }: { data: any; column: string }) {
 
 function DistributionSummary({ data, column }: { data: any; column: string }) {
   const bins = 20;
-  const values: number[] = data.values;
+  const values: number[] = Array.isArray(data?.values) ? data.values : [];
+  if (values.length === 0 || [data?.mean, data?.std, data?.skew, data?.kurtosis].some((v) => v === null || v === undefined || Number.isNaN(v))) {
+    return <p className="text-sm text-slate-400 p-8 text-center">Not enough numeric data in "{column}" to summarize.</p>;
+  }
   const min = Math.min(...values);
   const max = Math.max(...values);
   const width = (max - min) / bins || 1;

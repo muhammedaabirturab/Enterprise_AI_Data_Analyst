@@ -1,23 +1,24 @@
 import { BarChart3 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { apiErrorMessage } from "../../services/api";
 import { generateChart } from "../../services/chartService";
 import { ProfileResponse } from "../../types";
 import ChartRenderer from "../charts/ChartRenderer";
 import EmptyState from "../ui/EmptyState";
+import ErrorBoundary from "../ui/ErrorBoundary";
 import Select from "../ui/Select";
 import Spinner from "../ui/Spinner";
 
 const CHART_TYPES = [
-  { value: "histogram", label: "Histogram", needsX: true },
-  { value: "boxplot", label: "Box Plot", needsX: true },
-  { value: "scatter", label: "Scatter Plot", needsX: true, needsY: true },
+  { value: "histogram", label: "Histogram", needsX: true, xNumericOnly: true },
+  { value: "boxplot", label: "Box Plot", needsX: true, xNumericOnly: true },
+  { value: "scatter", label: "Scatter Plot", needsX: true, needsY: true, xNumericOnly: true, yNumericOnly: true },
   { value: "pie", label: "Pie Chart", needsCategory: true },
-  { value: "bar", label: "Bar Chart", needsCategory: true, needsY: true, yLabel: "Value (optional, sums if numeric)" },
-  { value: "line", label: "Line Chart", needsX: true, needsY: true },
-  { value: "area", label: "Area Chart", needsX: true, needsY: true },
-  { value: "distribution", label: "Distribution Summary", needsX: true },
+  { value: "bar", label: "Bar Chart", needsCategory: true, needsY: true, yOptional: true, yNumericOnly: true, yLabel: "Value (optional, sums if numeric)" },
+  { value: "line", label: "Line Chart", needsX: true, needsY: true, yNumericOnly: true },
+  { value: "area", label: "Area Chart", needsX: true, needsY: true, yNumericOnly: true },
+  { value: "distribution", label: "Distribution Summary", needsX: true, xNumericOnly: true },
 ];
 
 export default function ChartsSection({ datasetId, profile }: { datasetId: number; profile: ProfileResponse | null }) {
@@ -32,6 +33,22 @@ export default function ChartsSection({ datasetId, profile }: { datasetId: numbe
 
   const def = CHART_TYPES.find((c) => c.value === chartType)!;
   const allColumns = profile?.columns.map((c) => ({ value: c.name, label: c.name })) ?? [];
+  const numericColumns = profile?.columns.filter((c) => c.inferred_type === "numeric").map((c) => ({ value: c.name, label: c.name })) ?? [];
+  const xOptions = def.xNumericOnly ? numericColumns : allColumns;
+  const yOptions = def.yNumericOnly ? numericColumns : allColumns;
+
+  // Reset selections that are no longer valid whenever the chart type (and therefore
+  // the allowed column set) changes — prevents submitting a stale non-numeric column
+  // into a numeric-only field.
+  useEffect(() => {
+    setX((prev) => (xOptions.some((o) => o.value === prev) ? prev : ""));
+    setY((prev) => (yOptions.some((o) => o.value === prev) ? prev : ""));
+    setChart(null);
+    setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartType]);
+
+  const missingRequired = (def.needsX && !x) || (def.needsY && !def.yOptional && !y) || (def.needsCategory && !category);
 
   const handleGenerate = async () => {
     setError(null);
@@ -40,7 +57,7 @@ export default function ChartsSection({ datasetId, profile }: { datasetId: numbe
       const result = await generateChart(datasetId, {
         chart_type: chartType,
         x: def.needsX ? x : undefined,
-        y: def.needsY ? y : undefined,
+        y: def.needsY ? y || undefined : undefined,
         category: def.needsCategory ? category : undefined,
         bins,
       });
@@ -63,12 +80,18 @@ export default function ChartsSection({ datasetId, profile }: { datasetId: numbe
               label={chartType === "scatter" || chartType === "line" || chartType === "area" ? "X Axis" : "Column"}
               value={x}
               onChange={(e) => setX(e.target.value)}
-              options={allColumns}
-              placeholder="Select column"
+              options={xOptions}
+              placeholder={xOptions.length ? "Select column" : "No numeric columns available"}
             />
           )}
           {def.needsY && (
-            <Select label={def.yLabel || "Y Axis"} value={y} onChange={(e) => setY(e.target.value)} options={allColumns} placeholder="Select column" />
+            <Select
+              label={def.yLabel || "Y Axis"}
+              value={y}
+              onChange={(e) => setY(e.target.value)}
+              options={yOptions}
+              placeholder={def.yOptional ? "None (count rows)" : yOptions.length ? "Select column" : "No numeric columns available"}
+            />
           )}
           {def.needsCategory && (
             <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={allColumns} placeholder="Select column" />
@@ -80,17 +103,20 @@ export default function ChartsSection({ datasetId, profile }: { datasetId: numbe
             </div>
           )}
         </div>
-        <button onClick={handleGenerate} disabled={loading} className="btn-primary">
+        <button onClick={handleGenerate} disabled={loading || missingRequired} className="btn-primary">
           {loading ? <Spinner size={16} className="text-white" /> : <BarChart3 size={16} />}
           Generate Chart
         </button>
+        {missingRequired && <p className="text-xs text-slate-400 mt-2">Select the required column(s) above to enable this chart.</p>}
       </div>
 
       {error && <div className="rounded-xl bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 text-sm px-4 py-3">{error}</div>}
 
       {chart ? (
         <div className="card p-6">
-          <ChartRenderer chart={chart} />
+          <ErrorBoundary label="This chart">
+            <ChartRenderer chart={chart} />
+          </ErrorBoundary>
         </div>
       ) : (
         !error && (
