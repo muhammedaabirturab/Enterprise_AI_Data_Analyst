@@ -24,12 +24,29 @@ def _dataset_dir(dataset_id: int | str) -> Path:
     return path
 
 
+CSV_ENCODING_FALLBACKS = ["utf-8", "utf-8-sig", "cp1252", "latin1"]
+
+
+def _read_csv_with_fallback(raw_bytes: bytes) -> pd.DataFrame:
+    import io
+
+    last_error: Exception | None = None
+    for encoding in CSV_ENCODING_FALLBACKS:
+        try:
+            return pd.read_csv(io.BytesIO(raw_bytes), encoding=encoding)
+        except UnicodeDecodeError as exc:
+            last_error = exc
+            continue
+    # latin1 maps every byte to a character, so this should be unreachable in practice.
+    raise last_error  # type: ignore[misc]
+
+
 def read_dataframe_from_upload(raw_bytes: bytes, file_type: str) -> pd.DataFrame:
     import io
 
     try:
         if file_type == "csv":
-            df = pd.read_csv(io.BytesIO(raw_bytes))
+            df = _read_csv_with_fallback(raw_bytes)
         else:
             df = pd.read_excel(io.BytesIO(raw_bytes))
     except Exception as exc:  # noqa: BLE001
