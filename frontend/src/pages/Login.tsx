@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import AuthShowcase from "../components/ui/AuthShowcase";
 import Logo from "../components/ui/Logo";
+import PasswordInput from "../components/ui/PasswordInput";
 import Spinner from "../components/ui/Spinner";
 import { useAuth } from "../context/AuthContext";
 import { apiErrorMessage } from "../services/api";
@@ -63,12 +64,10 @@ export default function Login() {
             </div>
             <div>
               <label className="label-text">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="input-field"
                 placeholder="••••••••"
               />
             </div>

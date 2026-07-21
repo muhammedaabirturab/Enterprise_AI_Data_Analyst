@@ -1,6 +1,8 @@
 import { History, RotateCcw, SprayCan, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { useConfirm } from "../../context/ConfirmContext";
+import { useToast } from "../../context/ToastContext";
 import { apiErrorMessage } from "../../services/api";
 import { applyCleaning, getCleaningHistory, resetCleaning, undoCleaning } from "../../services/cleaningService";
 import { CleaningStep, ProfileResponse } from "../../types";
@@ -39,6 +41,8 @@ export default function CleaningSection({ datasetId, profile, onChanged }: Props
   const [encodeMethod, setEncodeMethod] = useState("label");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const { showToast } = useToast();
 
   const loadHistory = () => getCleaningHistory(datasetId).then(setHistory);
 
@@ -70,6 +74,7 @@ export default function CleaningSection({ datasetId, profile, onChanged }: Props
       await applyCleaning(datasetId, operation, params);
       await loadHistory();
       onChanged();
+      showToast(`Applied "${opDef.label}".`, "success");
       setSelectedColumns([]);
       setCustomValue("");
       setOldName("");
@@ -87,6 +92,7 @@ export default function CleaningSection({ datasetId, profile, onChanged }: Props
       await undoCleaning(datasetId);
       await loadHistory();
       onChanged();
+      showToast("Last cleaning step undone.", "success");
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {
@@ -95,12 +101,19 @@ export default function CleaningSection({ datasetId, profile, onChanged }: Props
   };
 
   const handleReset = async () => {
-    if (!confirm("Reset all cleaning steps back to the original upload?")) return;
+    const ok = await confirm({
+      title: "Reset all cleaning?",
+      message: "This discards every cleaning step and restores the dataset to its original uploaded state.",
+      confirmLabel: "Reset",
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await resetCleaning(datasetId);
       await loadHistory();
       onChanged();
+      showToast("Dataset reset to its original state.", "success");
     } finally {
       setBusy(false);
     }

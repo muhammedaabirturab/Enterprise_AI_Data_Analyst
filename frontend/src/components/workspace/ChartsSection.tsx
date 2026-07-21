@@ -5,6 +5,7 @@ import { apiErrorMessage } from "../../services/api";
 import { generateChart } from "../../services/chartService";
 import { ProfileResponse } from "../../types";
 import ChartRenderer from "../charts/ChartRenderer";
+import EmptyState from "../ui/EmptyState";
 import Select from "../ui/Select";
 import Spinner from "../ui/Spinner";
 
@@ -87,10 +88,18 @@ export default function ChartsSection({ datasetId, profile }: { datasetId: numbe
 
       {error && <div className="rounded-xl bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 text-sm px-4 py-3">{error}</div>}
 
-      {chart && (
+      {chart ? (
         <div className="card p-6">
           <ChartRenderer chart={chart} />
         </div>
+      ) : (
+        !error && (
+          <EmptyState
+            icon={BarChart3}
+            title="No chart yet"
+            description="Pick a chart type and columns above, then generate to see it rendered here."
+          />
+        )
       )}
     </div>
   );

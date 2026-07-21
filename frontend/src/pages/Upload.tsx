@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import UploadDropzone from "../components/upload/UploadDropzone";
+import { useConfirm } from "../context/ConfirmContext";
 import { useDataset } from "../context/DatasetContext";
+import { useToast } from "../context/ToastContext";
 import { apiErrorMessage } from "../services/api";
 import { deleteDataset, listDatasets, replaceDataset, uploadDataset } from "../services/datasetService";
 import { Dataset } from "../types";
@@ -16,6 +18,8 @@ export default function Upload() {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const { showToast } = useToast();
 
   const refresh = () => listDatasets().then(setDatasets).catch(() => {});
 
@@ -31,6 +35,7 @@ export default function Upload() {
       const dataset = await uploadDataset(file, setProgress);
       setActiveDataset(dataset);
       await refresh();
+      showToast(`"${dataset.name}" uploaded successfully.`, "success");
       navigate("/workspace");
     } catch (err) {
       setError(apiErrorMessage(err, "Upload failed. Please check the file and try again."));
@@ -44,17 +49,25 @@ export default function Upload() {
       const dataset = await replaceDataset(id, file);
       setActiveDataset(dataset);
       await refresh();
+      showToast(`Dataset replaced with "${dataset.name}".`, "success");
       navigate("/workspace");
     } catch (err) {
       setError(apiErrorMessage(err));
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this dataset permanently? This cannot be undone.")) return;
+  const handleDelete = async (id: number, name: string) => {
+    const ok = await confirm({
+      title: "Delete this dataset?",
+      message: `"${name}" will be permanently deleted. This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     await deleteDataset(id);
     if (activeDataset?.id === id) setActiveDataset(null);
     await refresh();
+    showToast(`"${name}" was deleted.`, "success");
   };
 
   return (
@@ -116,7 +129,7 @@ export default function Upload() {
                   />
                 </label>
                 <button
-                  onClick={() => handleDelete(ds.id)}
+                  onClick={() => handleDelete(ds.id, ds.name)}
                   className="p-2 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors"
                 >
                   <Trash2 size={16} />

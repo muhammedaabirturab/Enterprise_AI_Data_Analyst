@@ -14,10 +14,12 @@ import {
   YAxis,
 } from "recharts";
 
+import { useToast } from "../../context/ToastContext";
 import { apiErrorMessage } from "../../services/api";
 import { trainModel } from "../../services/mlService";
 import { MLRecommendation, MLRunResult, ProfileResponse } from "../../types";
 import Badge from "../ui/Badge";
+import EmptyState from "../ui/EmptyState";
 import Select from "../ui/Select";
 import Spinner from "../ui/Spinner";
 
@@ -62,6 +64,7 @@ export default function MLSection({ datasetId, profile, recommendations }: Props
   const [result, setResult] = useState<MLRunResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const columnOptions = profile?.columns.map((c) => ({ value: c.name, label: c.name })) ?? [];
 
@@ -85,6 +88,7 @@ export default function MLSection({ datasetId, profile, recommendations }: Props
         forecast_periods: forecastPeriods,
       });
       setResult(run);
+      showToast("Model trained successfully.", "success");
     } catch (err) {
       setError(apiErrorMessage(err, "Training failed — check your column selections."));
     } finally {
@@ -159,7 +163,17 @@ export default function MLSection({ datasetId, profile, recommendations }: Props
 
       {error && <div className="rounded-xl bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 text-sm px-4 py-3">{error}</div>}
 
-      {result && <ResultsPanel result={result} />}
+      {result ? (
+        <ResultsPanel result={result} />
+      ) : (
+        !error && (
+          <EmptyState
+            icon={Brain}
+            title="No model trained yet"
+            description="Choose a task and algorithm above — or apply an AI recommendation — then train to see metrics and charts here."
+          />
+        )
+      )}
     </div>
   );
 }

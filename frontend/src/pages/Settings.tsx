@@ -6,8 +6,10 @@ import { useNavigate } from "react-router-dom";
 import Logo from "../components/ui/Logo";
 import Spinner from "../components/ui/Spinner";
 import { useAuth } from "../context/AuthContext";
+import { useConfirm } from "../context/ConfirmContext";
 import { useDataset } from "../context/DatasetContext";
 import { useTheme } from "../context/ThemeContext";
+import { useToast } from "../context/ToastContext";
 import { deleteDataset, listDatasets } from "../services/datasetService";
 import { Dataset } from "../types";
 
@@ -16,6 +18,8 @@ export default function Settings() {
   const { theme, toggleTheme } = useTheme();
   const { activeDataset, setActiveDataset } = useDataset();
   const navigate = useNavigate();
+  const confirm = useConfirm();
+  const { showToast } = useToast();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -26,13 +30,22 @@ export default function Settings() {
     refresh();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Permanently delete this dataset? This cannot be undone.")) return;
+  const handleDelete = async (id: number, name: string) => {
+    const ok = await confirm({
+      title: "Delete this dataset?",
+      message: `"${name}" will be permanently deleted along with its cleaning history and ML runs. This cannot be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     setDeletingId(id);
     try {
       await deleteDataset(id);
       if (activeDataset?.id === id) setActiveDataset(null);
       await refresh();
+      showToast(`"${name}" was deleted.`, "success");
+    } catch {
+      showToast("Could not delete this dataset.", "error");
     } finally {
       setDeletingId(null);
     }
@@ -114,7 +127,7 @@ export default function Settings() {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleDelete(ds.id)}
+                  onClick={() => handleDelete(ds.id, ds.name)}
                   disabled={deletingId === ds.id}
                   className="p-2 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-500/10 transition-colors disabled:opacity-40"
                 >

@@ -2,12 +2,16 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import ChatWidget from "./components/chat/ChatWidget";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import Toaster from "./components/ui/Toaster";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatProvider } from "./context/ChatContext";
+import { ConfirmProvider } from "./context/ConfirmContext";
 import { DatasetProvider } from "./context/DatasetContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
 import Register from "./pages/Register";
 import Settings from "./pages/Settings";
 import Upload from "./pages/Upload";
@@ -40,11 +44,10 @@ function AppRoutes() {
         <Route path="/workspace" element={<Workspace />} />
         <Route path="/settings" element={<Settings />} />
         {LEGACY_WORKSPACE_REDIRECTS.map((path) => (
-          <Route key={path} path={path} element={<Navigate to="/workspace" replace />} />
+          <Route key={path} path={path} element={<Workspace />} />
         ))}
+        <Route path="*" element={<NotFound />} />
       </Route>
-
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );
 }
@@ -52,14 +55,19 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <DatasetProvider>
-          <ChatProvider>
-            <AppRoutes />
-            <ChatWidget />
-          </ChatProvider>
-        </DatasetProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AuthProvider>
+            <DatasetProvider>
+              <ChatProvider>
+                <AppRoutes />
+                <ChatWidget />
+                <Toaster />
+              </ChatProvider>
+            </DatasetProvider>
+          </AuthProvider>
+        </ConfirmProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

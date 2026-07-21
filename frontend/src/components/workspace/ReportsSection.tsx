@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { FileJson, FileSpreadsheet, FileText, Table } from "lucide-react";
 import { useState } from "react";
 
+import { useToast } from "../../context/ToastContext";
 import { exportCsv, exportExcel, exportJson, exportPdf } from "../../services/reportService";
 import Spinner from "../ui/Spinner";
 
@@ -42,11 +43,15 @@ const OPTIONS = [
 
 export default function ReportsSection({ datasetId, name }: { datasetId: number; name: string }) {
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const { showToast } = useToast();
 
-  const handle = async (key: string, action: (id: number, name: string) => Promise<void>) => {
+  const handle = async (key: string, label: string, action: (id: number, name: string) => Promise<void>) => {
     setBusyKey(key);
     try {
       await action(datasetId, name);
+      showToast(`${label} download started.`, "success");
+    } catch {
+      showToast(`Could not generate the ${label.toLowerCase()}.`, "error");
     } finally {
       setBusyKey(null);
     }
@@ -68,7 +73,7 @@ export default function ReportsSection({ datasetId, name }: { datasetId: number;
           </div>
           <h3 className="font-semibold text-slate-800 dark:text-white text-sm">{opt.label}</h3>
           <p className="text-xs text-slate-400 mt-1.5 flex-1 leading-relaxed">{opt.description}</p>
-          <button onClick={() => handle(opt.key, opt.action)} disabled={busyKey === opt.key} className="btn-secondary mt-4 text-xs">
+          <button onClick={() => handle(opt.key, opt.label, opt.action)} disabled={busyKey === opt.key} className="btn-secondary mt-4 text-xs">
             {busyKey === opt.key ? <Spinner size={14} /> : <opt.icon size={14} />}
             Download
           </button>

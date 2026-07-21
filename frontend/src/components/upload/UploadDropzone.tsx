@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { FileSpreadsheet, UploadCloud } from "lucide-react";
 import { DragEvent, useRef, useState } from "react";
 
+import { useToast } from "../../context/ToastContext";
 import ProgressBar from "../ui/ProgressBar";
 
 interface UploadDropzoneProps {
@@ -16,13 +17,14 @@ export default function UploadDropzone({ onFileSelected, uploading, progress }: 
   const [dragOver, setDragOver] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { showToast } = useToast();
 
   const handleFiles = (files: FileList | null) => {
     if (!files || !files.length) return;
     const file = files[0];
     const isValid = ACCEPTED.some((ext) => file.name.toLowerCase().endsWith(ext));
     if (!isValid) {
-      alert(`Unsupported file type. Please upload one of: ${ACCEPTED.join(", ")}`);
+      showToast(`Unsupported file type. Please upload a ${ACCEPTED.join(", ")} file.`, "error");
       return;
     }
     setSelectedName(file.name);

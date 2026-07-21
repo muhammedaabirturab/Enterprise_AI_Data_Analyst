@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import AuthShowcase from "../components/ui/AuthShowcase";
 import Logo from "../components/ui/Logo";
+import PasswordInput from "../components/ui/PasswordInput";
 import Spinner from "../components/ui/Spinner";
 import { useAuth } from "../context/AuthContext";
 import { apiErrorMessage } from "../services/api";
@@ -81,13 +82,11 @@ export default function Register() {
             </div>
             <div>
               <label className="label-text">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 minLength={8}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="input-field"
                 placeholder="At least 8 characters"
               />
             </div>
