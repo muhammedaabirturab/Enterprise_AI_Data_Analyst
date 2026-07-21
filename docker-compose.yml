@@ -1,0 +1,31 @@
+services:
+  backend:
+    build: ./backend
+    container_name: veridian-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - backend_storage:/app/storage
+      - backend_db:/app/data
+    environment:
+      - APP_NAME=Veridian
+      - ENVIRONMENT=production
+      - SECRET_KEY=${SECRET_KEY:-change-this-to-a-long-random-string-in-production}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/veridian.db}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:80}
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: veridian-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_storage:
+  backend_db:

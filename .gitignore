@@ -1,0 +1,46 @@
+# --- Python / Backend ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+*.sqlite3
+backend/app.db
+backend/*.db
+backend/storage/datasets/*
+!backend/storage/datasets/.gitkeep
+backend/storage/reports/*
+!backend/storage/reports/.gitkeep
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node / Frontend ---
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# --- Env ---
+.env
+.env.local
+backend/.env
+frontend/.env
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+*.log
