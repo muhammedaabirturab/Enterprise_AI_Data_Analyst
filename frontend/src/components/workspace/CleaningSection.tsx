@@ -1,13 +1,11 @@
 import { History, RotateCcw, SprayCan, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import Select from "../components/ui/Select";
-import Spinner from "../components/ui/Spinner";
-import { useDataset } from "../context/DatasetContext";
-import { apiErrorMessage } from "../services/api";
-import { applyCleaning, getCleaningHistory, resetCleaning, undoCleaning } from "../services/cleaningService";
-import { profileDataset } from "../services/datasetService";
-import { CleaningStep, ProfileResponse } from "../types";
+import { apiErrorMessage } from "../../services/api";
+import { applyCleaning, getCleaningHistory, resetCleaning, undoCleaning } from "../../services/cleaningService";
+import { CleaningStep, ProfileResponse } from "../../types";
+import Select from "../ui/Select";
+import Spinner from "../ui/Spinner";
 
 const OPERATIONS = [
   { value: "drop_rows_with_missing", label: "Drop rows with missing values", needsColumns: true },
@@ -24,9 +22,13 @@ const OPERATIONS = [
   { value: "encode", label: "Encode categorical column", needsColumns: true, needsEncodeMethod: true },
 ];
 
-export default function Cleaning() {
-  const { activeDataset } = useDataset();
-  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+interface Props {
+  datasetId: number;
+  profile: ProfileResponse | null;
+  onChanged: () => void;
+}
+
+export default function CleaningSection({ datasetId, profile, onChanged }: Props) {
   const [history, setHistory] = useState<CleaningStep[]>([]);
   const [operation, setOperation] = useState(OPERATIONS[0].value);
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
@@ -38,15 +40,12 @@ export default function Cleaning() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
-    if (!activeDataset) return;
-    profileDataset(activeDataset.id).then(setProfile);
-    getCleaningHistory(activeDataset.id).then(setHistory);
-  };
+  const loadHistory = () => getCleaningHistory(datasetId).then(setHistory);
 
-  useEffect(load, [activeDataset]);
-
-  if (!activeDataset) return <p className="text-slate-400">Select or upload a dataset first.</p>;
+  useEffect(() => {
+    loadHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasetId]);
 
   const opDef = OPERATIONS.find((o) => o.value === operation)!;
   const columnOptions = profile?.columns.map((c) => ({ value: c.name, label: c.name })) ?? [];
@@ -68,9 +67,9 @@ export default function Cleaning() {
       }
       if (opDef.needsEncodeMethod) params.method = encodeMethod;
 
-      const updated = await applyCleaning(activeDataset.id, operation, params);
-      setProfile(updated);
-      load();
+      await applyCleaning(datasetId, operation, params);
+      await loadHistory();
+      onChanged();
       setSelectedColumns([]);
       setCustomValue("");
       setOldName("");
@@ -85,9 +84,9 @@ export default function Cleaning() {
   const handleUndo = async () => {
     setBusy(true);
     try {
-      const updated = await undoCleaning(activeDataset.id);
-      setProfile(updated);
-      load();
+      await undoCleaning(datasetId);
+      await loadHistory();
+      onChanged();
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {
@@ -99,9 +98,9 @@ export default function Cleaning() {
     if (!confirm("Reset all cleaning steps back to the original upload?")) return;
     setBusy(true);
     try {
-      const updated = await resetCleaning(activeDataset.id);
-      setProfile(updated);
-      load();
+      await resetCleaning(datasetId);
+      await loadHistory();
+      onChanged();
     } finally {
       setBusy(false);
     }
@@ -113,15 +112,8 @@ export default function Cleaning() {
 
   return (
     <div className="grid lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Data Cleaning</h1>
-          <p className="text-slate-400 mt-1">
-            {profile ? `${profile.n_rows.toLocaleString()} rows · ${profile.missing_pct}% missing · quality ${profile.quality_score}/100` : ""}
-          </p>
-        </div>
-
-        {error && <div className="rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 text-sm px-4 py-3">{error}</div>}
+      <div className="lg:col-span-2 space-y-4">
+        {error && <div className="rounded-xl bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 text-sm px-4 py-3">{error}</div>}
 
         <div className="card p-6 space-y-4">
           <Select label="Operation" value={operation} onChange={(e) => setOperation(e.target.value)} options={OPERATIONS} />
@@ -136,8 +128,8 @@ export default function Cleaning() {
                     onClick={() => toggleColumn(c.value)}
                     className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                       selectedColumns.includes(c.value)
-                        ? "bg-brand-600 text-white border-brand-600"
-                        : "border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                        ? "bg-brand-gradient text-white border-transparent"
+                        : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-brand-300"
                     }`}
                   >
                     {c.label}
@@ -217,9 +209,9 @@ export default function Cleaning() {
       </div>
 
       <div className="card p-6 h-fit">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-800 dark:text-white">
-          <History size={18} /> Cleaning History
-        </h2>
+        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-slate-800 dark:text-white">
+          <History size={16} /> Cleaning History
+        </h3>
         {history.length === 0 && <p className="text-sm text-slate-400">No cleaning steps applied yet.</p>}
         <ol className="space-y-3">
           {history.map((step, idx) => (

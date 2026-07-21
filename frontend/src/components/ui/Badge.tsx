@@ -1,9 +1,10 @@
 const VARIANTS: Record<string, string> = {
-  default: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
-  warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
-  danger: "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400",
-  brand: "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300",
+  default: "bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300",
+  success: "bg-success-100 text-success-600 dark:bg-success-500/10 dark:text-success-400",
+  warning: "bg-warning-100 text-warning-600 dark:bg-warning-500/10 dark:text-warning-400",
+  danger: "bg-danger-100 text-danger-600 dark:bg-danger-500/10 dark:text-danger-400",
+  brand: "bg-brand-100 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300",
+  accent: "bg-accent-100 text-accent-700 dark:bg-accent-500/10 dark:text-accent-300",
 };
 
 export default function Badge({

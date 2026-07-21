@@ -46,8 +46,8 @@ export default function UploadDropzone({ onFileSelected, uploading, progress }: 
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
       onClick={() => inputRef.current?.click()}
-      className={`card cursor-pointer border-2 border-dashed p-12 text-center transition-colors ${
-        dragOver ? "border-brand-500 bg-brand-50 dark:bg-brand-900/20" : "border-slate-300 dark:border-slate-700"
+      className={`card cursor-pointer border-2 border-dashed p-14 text-center transition-all duration-300 bg-mesh-light dark:bg-mesh-dark ${
+        dragOver ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/5 scale-[1.01]" : "border-slate-200 dark:border-white/10 hover:border-brand-300 dark:hover:border-brand-700"
       }`}
     >
       <input
@@ -58,14 +58,22 @@ export default function UploadDropzone({ onFileSelected, uploading, progress }: 
         onChange={(e) => handleFiles(e.target.files)}
       />
       <div className="flex flex-col items-center gap-4">
-        <div className="rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 p-4 text-white shadow-elevated">
-          {selectedName ? <FileSpreadsheet size={32} /> : <UploadCloud size={32} />}
+        <div className="rounded-2xl bg-brand-gradient p-4 text-white shadow-elevated">
+          {selectedName ? <FileSpreadsheet size={30} /> : <UploadCloud size={30} className={dragOver ? "" : "animate-float"} />}
         </div>
         <div>
           <p className="text-lg font-semibold text-slate-800 dark:text-white">
             {selectedName || "Drag & drop your dataset here"}
           </p>
-          <p className="text-sm text-slate-400 mt-1">or click to browse — CSV, XLSX, or XLS (max 50MB)</p>
+          <p className="text-sm text-slate-400 mt-1.5">or click to browse</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {["CSV", "XLSX", "XLS"].map((ext) => (
+            <span key={ext} className="text-[11px] font-semibold px-2 py-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400">
+              {ext}
+            </span>
+          ))}
+          <span className="text-[11px] text-slate-400">· max 50MB</span>
         </div>
         {uploading && (
           <div className="w-full max-w-xs">

@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot, MessageCircle, Send, User as UserIcon, X } from "lucide-react";
+import { Bot, MessageCircle, Send, Sparkles, User as UserIcon, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { useChatWidget } from "../../context/ChatContext";
 import { useDataset } from "../../context/DatasetContext";
 import { getChatHistory, sendChatMessage } from "../../services/aiService";
 import { ChatMessage } from "../../types";
@@ -17,17 +18,17 @@ const SUGGESTIONS = [
 
 export default function ChatWidget() {
   const { activeDataset } = useDataset();
-  const [open, setOpen] = useState(false);
+  const { isOpen, setOpen, pendingMessage, consumePendingMessage } = useChatWidget();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (open && activeDataset) {
+    if (isOpen && activeDataset) {
       getChatHistory(activeDataset.id).then(setMessages).catch(() => setMessages([]));
     }
-  }, [open, activeDataset]);
+  }, [isOpen, activeDataset]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -54,37 +55,53 @@ export default function ChatWidget() {
     }
   };
 
+  useEffect(() => {
+    if (isOpen && pendingMessage) {
+      submit(pendingMessage);
+      consumePendingMessage();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, pendingMessage]);
+
   if (!activeDataset) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-40">
       <AnimatePresence>
-        {open && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="card w-[380px] h-[520px] flex flex-col mb-4 overflow-hidden"
+            transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+            className="card w-[380px] h-[540px] flex flex-col mb-4 overflow-hidden shadow-elevated"
           >
-            <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white">
+            <div className="flex items-center justify-between px-4 py-3.5 bg-brand-gradient text-white">
               <div className="flex items-center gap-2">
-                <Bot size={18} />
-                <span className="font-semibold text-sm">Veridian AI Assistant</span>
+                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
+                  <Bot size={16} />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm leading-tight">Veridian AI</p>
+                  <p className="text-[10px] text-white/70 leading-tight">Grounded in your dataset</p>
+                </div>
               </div>
-              <button onClick={() => setOpen(false)}>
+              <button onClick={() => setOpen(false)} className="hover:bg-white/10 rounded-lg p-1 transition-colors">
                 <X size={18} />
               </button>
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 dark:bg-slate-900">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50 dark:bg-surface-dark">
               {messages.length === 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs text-slate-400 mb-2">Try asking:</p>
+                  <p className="text-xs font-medium text-slate-400 mb-2 flex items-center gap-1.5">
+                    <Sparkles size={12} /> Try asking:
+                  </p>
                   {SUGGESTIONS.map((s) => (
                     <button
                       key={s}
                       onClick={() => submit(s)}
-                      className="block w-full text-left text-xs px-3 py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-400 transition-colors"
+                      className="block w-full text-left text-xs px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-brand-400 dark:hover:border-brand-500 transition-colors"
                     >
                       {s}
                     </button>
@@ -104,7 +121,7 @@ export default function ChatWidget() {
                     className={`rounded-2xl px-3.5 py-2.5 text-sm max-w-[75%] whitespace-pre-wrap ${
                       m.role === "user"
                         ? "bg-brand-600 text-white rounded-tr-sm"
-                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-slate-700"
+                        : "bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-white/10"
                     }`}
                   >
                     {m.content}
@@ -123,7 +140,7 @@ export default function ChatWidget() {
                 e.preventDefault();
                 submit(input);
               }}
-              className="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2"
+              className="p-3 border-t border-slate-200 dark:border-white/5 flex items-center gap-2"
             >
               <input
                 value={input}
@@ -140,12 +157,12 @@ export default function ChatWidget() {
       </AnimatePresence>
 
       <motion.button
-        whileHover={{ scale: 1.05 }}
+        whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setOpen((o) => !o)}
-        className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-600 to-accent-500 text-white shadow-elevated flex items-center justify-center"
+        onClick={() => setOpen(!isOpen)}
+        className="w-14 h-14 rounded-full bg-brand-gradient text-white shadow-elevated flex items-center justify-center"
       >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
+        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
       </motion.button>
     </div>
   );

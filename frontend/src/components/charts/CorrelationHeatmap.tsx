@@ -7,11 +7,17 @@ function colorFor(value: number | null): string {
   if (value === null) return "#e2e8f0";
   const clamped = Math.max(-1, Math.min(1, value));
   if (clamped >= 0) {
-    const intensity = Math.round(clamped * 200);
-    return `rgb(${79 + (255 - 79) * (1 - clamped)}, ${70 + (255 - 70) * (1 - clamped)}, ${229})`;
+    // white -> indigo/cyan blend
+    const r = 255 - (255 - 79) * clamped;
+    const g = 255 - (255 - 140) * clamped;
+    const b = 255 - (255 - 214) * clamped;
+    return `rgb(${r}, ${g}, ${b})`;
   }
   const abs = Math.abs(clamped);
-  return `rgb(244, ${63 + (255 - 63) * (1 - abs)}, ${94 + (255 - 94) * (1 - abs)})`;
+  const r = 255 - (255 - 244) * abs;
+  const g = 255 - (255 - 63) * abs;
+  const b = 255 - (255 - 94) * abs;
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 export default function CorrelationHeatmap({ columns, matrix }: Props) {
@@ -38,20 +44,19 @@ export default function CorrelationHeatmap({ columns, matrix }: Props) {
               <td className="p-1 pr-2 font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap text-right max-w-[100px] truncate" title={columns[i]}>
                 {columns[i]}
               </td>
-              {row.map((value, j) => (
-                <td
-                  key={j}
-                  className="p-0 text-center"
-                  title={value !== null ? value.toFixed(2) : "N/A"}
-                >
-                  <div
-                    className="w-10 h-10 flex items-center justify-center text-[10px] font-medium text-slate-800"
-                    style={{ backgroundColor: colorFor(value) }}
-                  >
-                    {value !== null ? value.toFixed(2) : "-"}
-                  </div>
-                </td>
-              ))}
+              {row.map((value, j) => {
+                const isStrong = value !== null && Math.abs(value) > 0.6;
+                return (
+                  <td key={j} className="p-0.5 text-center" title={value !== null ? value.toFixed(2) : "N/A"}>
+                    <div
+                      className="w-10 h-10 flex items-center justify-center text-[10px] font-semibold rounded-lg transition-transform hover:scale-110 hover:z-10 relative"
+                      style={{ backgroundColor: colorFor(value), color: isStrong ? "white" : "#334155" }}
+                    >
+                      {value !== null ? value.toFixed(2) : "-"}
+                    </div>
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

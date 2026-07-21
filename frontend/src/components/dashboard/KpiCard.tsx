@@ -1,38 +1,56 @@
 import { motion } from "framer-motion";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Minus, TrendingDown, TrendingUp } from "lucide-react";
 
 interface KpiCardProps {
   label: string;
   value: string | number;
   icon: LucideIcon;
-  accent?: "brand" | "accent" | "amber" | "rose";
+  accent?: "brand" | "accent" | "success" | "warning" | "danger";
   hint?: string;
+  trend?: "up" | "down" | "flat";
   delay?: number;
 }
 
-const ACCENTS: Record<string, { bg: string; text: string }> = {
-  brand: { bg: "bg-brand-50 dark:bg-brand-900/30", text: "text-brand-600 dark:text-brand-400" },
-  accent: { bg: "bg-emerald-50 dark:bg-emerald-900/30", text: "text-accent-600 dark:text-accent-400" },
-  amber: { bg: "bg-amber-50 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400" },
-  rose: { bg: "bg-rose-50 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400" },
+const ACCENTS: Record<string, { bg: string; text: string; ring: string }> = {
+  brand: { bg: "bg-brand-50 dark:bg-brand-500/10", text: "text-brand-600 dark:text-brand-400", ring: "group-hover:ring-brand-200 dark:group-hover:ring-brand-800" },
+  accent: { bg: "bg-accent-50 dark:bg-accent-500/10", text: "text-accent-600 dark:text-accent-400", ring: "group-hover:ring-accent-200 dark:group-hover:ring-accent-800" },
+  success: { bg: "bg-success-50 dark:bg-success-500/10", text: "text-success-600 dark:text-success-400", ring: "group-hover:ring-success-200 dark:group-hover:ring-success-800" },
+  warning: { bg: "bg-warning-50 dark:bg-warning-500/10", text: "text-warning-600 dark:text-warning-400", ring: "group-hover:ring-warning-200 dark:group-hover:ring-warning-800" },
+  danger: { bg: "bg-danger-50 dark:bg-danger-500/10", text: "text-danger-600 dark:text-danger-400", ring: "group-hover:ring-danger-200 dark:group-hover:ring-danger-800" },
 };
 
-export default function KpiCard({ label, value, icon: Icon, accent = "brand", hint, delay = 0 }: KpiCardProps) {
+const TREND_ICON = { up: TrendingUp, down: TrendingDown, flat: Minus };
+
+export default function KpiCard({ label, value, icon: Icon, accent = "brand", hint, trend, delay = 0 }: KpiCardProps) {
   const colors = ACCENTS[accent];
+  const TrendIcon = trend ? TREND_ICON[trend] : null;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay }}
-      className="card p-5 flex items-start justify-between hover:shadow-elevated transition-shadow"
+      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
+      className="group card card-hover ring-1 ring-transparent p-5 flex flex-col gap-4"
     >
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
-        <p className="mt-2 text-2xl font-display font-bold text-slate-900 dark:text-white">{value}</p>
-        {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
+      <div className="flex items-start justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">{label}</p>
+        <div className={`rounded-xl p-2 ${colors.bg} transition-transform duration-300 group-hover:scale-110`}>
+          <Icon size={16} className={colors.text} />
+        </div>
       </div>
-      <div className={`rounded-xl p-2.5 ${colors.bg}`}>
-        <Icon size={20} className={colors.text} />
+      <div>
+        <p className="text-[28px] leading-none font-display font-bold text-slate-900 dark:text-white tabular-nums">{value}</p>
+        {(hint || trend) && (
+          <div className="mt-2 flex items-center gap-1.5">
+            {TrendIcon && (
+              <TrendIcon
+                size={13}
+                className={trend === "up" ? "text-success-500" : trend === "down" ? "text-danger-500" : "text-slate-400"}
+              />
+            )}
+            {hint && <p className="text-xs text-slate-400">{hint}</p>}
+          </div>
+        )}
       </div>
     </motion.div>
   );

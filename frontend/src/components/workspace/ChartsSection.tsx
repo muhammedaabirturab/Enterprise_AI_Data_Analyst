@@ -1,14 +1,12 @@
 import { BarChart3 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import ChartRenderer from "../components/charts/ChartRenderer";
-import Select from "../components/ui/Select";
-import Spinner from "../components/ui/Spinner";
-import { useDataset } from "../context/DatasetContext";
-import { apiErrorMessage } from "../services/api";
-import { generateChart } from "../services/chartService";
-import { profileDataset } from "../services/datasetService";
-import { ProfileResponse } from "../types";
+import { apiErrorMessage } from "../../services/api";
+import { generateChart } from "../../services/chartService";
+import { ProfileResponse } from "../../types";
+import ChartRenderer from "../charts/ChartRenderer";
+import Select from "../ui/Select";
+import Spinner from "../ui/Spinner";
 
 const CHART_TYPES = [
   { value: "histogram", label: "Histogram", needsX: true },
@@ -21,9 +19,7 @@ const CHART_TYPES = [
   { value: "distribution", label: "Distribution Summary", needsX: true },
 ];
 
-export default function Charts() {
-  const { activeDataset } = useDataset();
-  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+export default function ChartsSection({ datasetId, profile }: { datasetId: number; profile: ProfileResponse | null }) {
   const [chartType, setChartType] = useState("histogram");
   const [x, setX] = useState("");
   const [y, setY] = useState("");
@@ -33,21 +29,14 @@ export default function Charts() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeDataset) profileDataset(activeDataset.id).then(setProfile);
-  }, [activeDataset]);
-
-  if (!activeDataset) return <p className="text-slate-400">Select or upload a dataset first.</p>;
-
   const def = CHART_TYPES.find((c) => c.value === chartType)!;
   const allColumns = profile?.columns.map((c) => ({ value: c.name, label: c.name })) ?? [];
-  const numericColumns = profile?.columns.filter((c) => c.inferred_type === "numeric").map((c) => ({ value: c.name, label: c.name })) ?? [];
 
   const handleGenerate = async () => {
     setError(null);
     setLoading(true);
     try {
-      const result = await generateChart(activeDataset.id, {
+      const result = await generateChart(datasetId, {
         chart_type: chartType,
         x: def.needsX ? x : undefined,
         y: def.needsY ? y : undefined,
@@ -64,12 +53,7 @@ export default function Charts() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">Charts</h1>
-        <p className="text-slate-400 mt-1">Build interactive visualizations from {activeDataset.name}</p>
-      </div>
-
+    <div className="space-y-5">
       <div className="card p-6">
         <div className="grid md:grid-cols-4 gap-4 mb-4">
           <Select label="Chart Type" value={chartType} onChange={(e) => setChartType(e.target.value)} options={CHART_TYPES} />
@@ -101,7 +85,7 @@ export default function Charts() {
         </button>
       </div>
 
-      {error && <div className="rounded-xl bg-rose-50 dark:bg-rose-900/30 text-rose-600 text-sm px-4 py-3">{error}</div>}
+      {error && <div className="rounded-xl bg-danger-50 dark:bg-danger-500/10 text-danger-600 dark:text-danger-400 text-sm px-4 py-3">{error}</div>}
 
       {chart && (
         <div className="card p-6">

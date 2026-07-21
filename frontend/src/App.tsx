@@ -3,25 +3,24 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ChatWidget from "./components/chat/ChatWidget";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ChatProvider } from "./context/ChatContext";
 import { DatasetProvider } from "./context/DatasetContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import AIInsights from "./pages/AIInsights";
-import Charts from "./pages/Charts";
-import Cleaning from "./pages/Cleaning";
-import DataPreview from "./pages/DataPreview";
 import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 import Login from "./pages/Login";
-import MachineLearning from "./pages/MachineLearning";
-import Profiling from "./pages/Profiling";
 import Register from "./pages/Register";
-import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import Upload from "./pages/Upload";
+import Workspace from "./pages/Workspace";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
+
+// Legacy standalone-page routes now live as anchored sections inside /workspace.
+const LEGACY_WORKSPACE_REDIRECTS = ["/preview", "/profiling", "/cleaning", "/charts", "/ml", "/insights", "/reports"];
 
 function AppRoutes() {
   return (
@@ -38,13 +37,11 @@ function AppRoutes() {
       >
         <Route path="/dashboard" element={<ExecutiveDashboard />} />
         <Route path="/upload" element={<Upload />} />
-        <Route path="/preview" element={<DataPreview />} />
-        <Route path="/profiling" element={<Profiling />} />
-        <Route path="/cleaning" element={<Cleaning />} />
-        <Route path="/charts" element={<Charts />} />
-        <Route path="/ml" element={<MachineLearning />} />
-        <Route path="/insights" element={<AIInsights />} />
-        <Route path="/reports" element={<Reports />} />
+        <Route path="/workspace" element={<Workspace />} />
+        <Route path="/settings" element={<Settings />} />
+        {LEGACY_WORKSPACE_REDIRECTS.map((path) => (
+          <Route key={path} path={path} element={<Navigate to="/workspace" replace />} />
+        ))}
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -57,8 +54,10 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <DatasetProvider>
-          <AppRoutes />
-          <ChatWidget />
+          <ChatProvider>
+            <AppRoutes />
+            <ChatWidget />
+          </ChatProvider>
         </DatasetProvider>
       </AuthProvider>
     </ThemeProvider>

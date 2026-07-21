@@ -76,9 +76,13 @@ Branded, multi-page PDF reports (ReportLab) with cover page, KPIs, executive sum
 correlation/outlier charts, column profile tables, page numbers, and footer — plus raw
 CSV, Excel, and JSON export.
 
-### Enterprise UI
-Dashboard layout with sidebar navigation, light/dark themes, animated cards (Framer
-Motion), and a fully responsive design.
+### Premium, Single-Workspace UI
+A minimal 4-item sidebar (Dashboard, Upload, Workspace, Settings) instead of a
+traditional multi-page admin panel. After uploading a dataset, everything —
+KPIs, preview, profiling, quality, cleaning, charts, ML, AI insights, reports,
+and the chat assistant — lives on one continuous, scrollable **Workspace**
+page with a scrollspy sub-nav, reveal-on-scroll sections, light/dark themes,
+and Framer Motion animations throughout.
 
 ---
 
