@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import ChatWidget from "./components/chat/ChatWidget";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import NetworkStatusListener from "./components/ui/NetworkStatusListener";
 import Toaster from "./components/ui/Toaster";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ChatProvider } from "./context/ChatContext";
@@ -63,6 +64,7 @@ export default function App() {
                 <AppRoutes />
                 <ChatWidget />
                 <Toaster />
+                <NetworkStatusListener />
               </ChatProvider>
             </DatasetProvider>
           </AuthProvider>

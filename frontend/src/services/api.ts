@@ -12,6 +12,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const NETWORK_ERROR_EVENT = "veridian:network-error";
+let lastNetworkErrorNotifiedAt = 0;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -20,6 +23,15 @@ api.interceptors.response.use(
       localStorage.removeItem("veridian_user");
       if (!window.location.pathname.startsWith("/login")) {
         window.location.href = "/login";
+      }
+    } else if (!error.response) {
+      // The backend is unreachable (dev server down, connection reset, etc).
+      // Many requests can fail at once (the workspace fires several in parallel),
+      // so throttle to at most one notification every 10s instead of a flood.
+      const now = Date.now();
+      if (now - lastNetworkErrorNotifiedAt > 10_000) {
+        lastNetworkErrorNotifiedAt = now;
+        window.dispatchEvent(new CustomEvent(NETWORK_ERROR_EVENT));
       }
     }
     return Promise.reject(error);
@@ -30,9 +42,17 @@ export default api;
 
 export function apiErrorMessage(error: unknown, fallback = "Something went wrong. Please try again."): string {
   if (axios.isAxiosError(error)) {
-    const detail = error.response?.data?.detail;
+    // No response at all means the request never reached (or never returned from) the
+    // backend — a dead dev server, a dropped connection, etc. — not a validation error.
+    if (!error.response) {
+      return "Can't reach the Veridian server. Make sure the backend is running, then try again.";
+    }
+    const detail = error.response.data?.detail;
     if (typeof detail === "string") return detail;
     if (Array.isArray(detail)) return detail.map((d) => d.msg).join(", ");
+    if (error.response.status >= 500) {
+      return "The server ran into a problem handling that request. Please try again in a moment.";
+    }
   }
   return fallback;
 }
